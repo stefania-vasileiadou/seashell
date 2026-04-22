@@ -7,7 +7,6 @@
 
 /* Global variables */
 FILE *fileid;
-char *env_args[] = {"PATH=/bin", (char *)0};
 
 void init_shell()
 {
@@ -24,7 +23,7 @@ void init_shell()
     printf("   svcs \\|_/\n\n");
 
     /* Open a file for session history */
-    // fileid = fopen(HISTORY_FILE, "a");
+    fileid = fopen(HISTORY_FILE, "w");
 }
 
 int main()
@@ -39,8 +38,9 @@ int main()
         fgets(cmdline, MAXLINE, stdin);
         if (feof(stdin))
         {
+            fclose(fileid);
+            unlink(HISTORY_FILE);
             exit(0);
-            // fclose(fileid);
         }
 
         eval(cmdline);
@@ -54,18 +54,20 @@ void eval(char *cmdline)
     int bg;
     pid_t pid;
 
+    fputs(cmdline, fileid);   /* Update command-line history */
+    fflush(fileid); /* Forces a write of all buffered data for the output file */
+
     strcpy(buf, cmdline);
     bg = parseline(buf, argv);
 
     if (argv[0] == NULL)
         return; /* Ignore empty lines */
 
-
     if (!builtin_command(argv))
     {
         if ((pid = fork()) == 0) /* child proc runs user job */
         { 
-            if (execve(argv[0], argv, env_args) < 0)
+            if (execvp(argv[0], argv) < 0)
             {
                 printf("%s: command not found.\n", argv[0]);
                 exit(0);
@@ -125,7 +127,11 @@ int parseline(char *buf, char **argv)
 int builtin_command(char **argv)
 {
     if (!strcmp(argv[0], "quit")) /* quit command */
+    {
+        fclose(fileid);
+        unlink(HISTORY_FILE);
         exit(0);
+    }
     if (!strcmp(argv[0], "&")) /* Ignore singleton & */
         return 1;
 

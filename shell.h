@@ -1,6 +1,6 @@
 #define MAXLINE 1048576 /* kernel dependent */
 #define MAXARGS 128
-#define HISTORY_FILE ".seashell_history" /* hidden file */
+#define HISTORY_FILE ".seashell_history.txt" /* hidden file */
 
 // Move all the text to the top of the terminal and sets the cursor position to (1,1)
 #define clear() printf("\033[H\033[J");
